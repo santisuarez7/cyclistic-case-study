@@ -117,8 +117,9 @@ duracion_80
 ```
 
 Los resultados muestran que:
-	•	El 80% de los viajes de los *miembros anuales* tiene una duración de hasta ~15 minutos.
-	•	El 80% de los viajes de los *usuarios casuales* tiene una duración de hasta ~38 minutos.
+
+- El 80% de los viajes de los *miembros anuales* tiene una duración de hasta ~15 minutos.
+- El 80% de los viajes de los *usuarios casuales* tiene una duración de hasta ~38 minutos.
 
 Esto indica que los *miembros* tienden a realizar trayectos cortos y funcionales,
 mientras que los *usuarios casuales* presentan un uso más prolongado, asociado a
