@@ -1,0 +1,73 @@
+---
+title: "Cyclistic Case Study"
+author: "Santiago Suárez"
+date: "2025-12-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+
+all_trips <- read_csv("all_trips_clean.csv")
+```
+
+### Sobre Cyclistic
+Cyclistic es una empresa ficticia que cuenta con un sistema bicicletas compartidas
+y tiene base en Chicago, Estados Unidos. La compañía ofrece pases por viaje individual,
+pases diarios y membresías anuales.
+
+### 1. Business Task
+Los directivos de la empresa creen que la clave para el crecimiento de Cyclistic es
+maximizar el número de membresías anuales, debido a que son mucho mas rentables
+para la compañía que los pases diarios o viajes individuales. 
+
+El objetivo de la directora de marketing es diseñar estrategias de marketing con 
+la finalidad de convertir a los usuarios casuales en miembros anuales.
+
+Para lograr eso, primeramente el equipo necesita tener un mejor entendimiento sobre:
+- ¿Cómo los miembros anuales difieren de los usuarios casuales en la manera de usar Cyclistic?
+- ¿Por qué los usuarios casuales querrían adquirir la membresía anual de Cyclistic?
+- ¿Como puede Cyclistic utilizar los medios digitales para influenciar a los usuarios
+casuales a volverse miembros?
+
+### 2. Fuentes de datos
+El análisis fue hecho utilizando dos datasets (Divvy_Q1_2019 y Divvy_Q1_2020) 
+proporcionados por Motivate International Inc.
+
+### 3. Limpieza y preparación de datos
+La limpieza y preparación de los datos se realizó en R utilizando principalmente
+la colección **tidyverse**. El proceso incluyó los siguientes pasos:
+
+- Carga de los datasets de viajes correspondientes al primer trimestre de 2019 y 2020.
+- Revisión de la estructura, tipos de datos y valores nulos utilizando funciones
+  como `glimpse()` y `skim_without_charts()` de `skimr`.
+- Estandarización de nombres y formatos de columnas para que ambos datasets
+  compartieran la misma estructura.
+- Limpieza de imperfecciones en los nombres de columnas con `clean_names()` de `janitor`
+- Conversión de los `trip_id` a un tipo de dato común (chr).
+- Creación y calculación de `trip_duration` faltante en el dataset de 2020.
+- Eliminación de columnas que no resultaban relevantes para el análisis.
+- Normalización del tipo de usuario en dos categorías: `member` y `casual`.
+- Unión de ambos datasets en un único conjunto de datos limpio para su análisis.
+-	Detección de valores atípicos en la duración de los viajes, incluyendo viajes
+extremadamente largos o con duraciones negativas.
+-	Filtrado de viajes con duraciones menores a 1 minuto y mayores a 1 día, ya que
+estos valores no representan viajes reales y podrían distorsionar los resultados del análisis.
+
+### 4. Análisis
+(Acá empezás con summaries, group_by, mean, counts, etc.)
+
+### 5. Visualizaciones & Key Findings
+(ggplot acá)
+
+
+
+### 6. Recomendaciones
+1. ...
+2. ...
+3. ...
+
+
+
+
+

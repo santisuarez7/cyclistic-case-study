@@ -1,0 +1,357 @@
+library(tidyverse)
+library(lubridate)
+library(paletteer)
+
+Sys.setlocale("LC_TIME", "es_ES.UTF-8")
+
+# El dataset all_trips está precargado
+
+head(all_trips)
+
+# Primeras diferencias entre miembros anuales y usuarios casuales:
+# 1.Mayor cantidad de viajes realizados: MIEMBROS (+900%)
+# 2.Mayor duración de viaje promedio: CASUALES (+150%)
+# 3.Mayor tiempo total viajado: MIEMBROS (+200%)
+all_trips %>% 
+  group_by(user_type) %>% 
+  summarize(trips_count = n(),
+            avg_trip_duration = mean(trip_duration),
+            total_time_traveled = sum(trip_duration))
+
+# Visualizaciones sobre lo anterior
+ggplot(summary_by_user, aes(x = user_type, y = trips_count)) +
+  geom_col()
+# Enorme diferencia en la cantidad de viajes, muchos mas viajes realizados por Miembros
+
+
+#### Violin Plot comparando la duracion vs la cantidad de viajes ####
+all_trips %>% 
+  filter(trip_duration < 5400) %>% 
+  ggplot(aes(x = user_type, y = trip_duration, fill=user_type)) +
+  geom_violin(alpha = 0.8) +
+  geom_boxplot(
+    width = 0.2,
+    outlier.shape = NA,
+    alpha = 0.4
+  ) +
+  scale_fill_manual(
+    values = c(
+      member = "#FED789FF",
+      casual = "#72874EFF"
+    )
+  ) +
+  scale_y_continuous(breaks = seq(0, 5400, by=900),
+                     labels = function(x) paste0(x / 60)) +
+  scale_x_discrete(
+    labels = c(
+      member = "Miembros Anuales",
+      casual = "Usuarios Casuales"
+    )
+  ) +
+  labs(
+    title = "Duración de los viajes: usuarios casuales vs miembros",
+    subtitle = "Comparacion de la duración de los viajes entre los tipos de usuario",
+    x = "Tipo de usuario",
+    y = "Duración del viaje (min)"
+  ) + 
+  theme_minimal() + 
+  theme(
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+# Se puede observar que la duracion de los viajes de los Miembros suelen durar
+# entre 5 y 15 minutos, viajes cortos.
+
+# Mientras que los Casuales, si bien también hay una densidad mayor en los viajes
+# entre 5 y 15 minutos, hay una distribución mas pareja y se suelen realizar
+# viajes mas largos.
+
+all_trips %>% 
+  group_by(user_type) %>% 
+  summarize(median_duration = median(trip_duration)/60)
+
+# La duración media de los viajes de los Casuales es de 23.2 minutos
+# y la de los Miembros es de 8.5 minutos
+
+ggsave("plots/1_Duracion de los viajes.png")
+
+
+#### Histograma sobre la distribución de la duración de los viajes ####
+ggplot(all_trips, aes(x = trip_duration, fill = user_type,)) +
+  geom_histogram(
+    binwidth = 300,
+    color = "black",
+    alpha = 0.8
+  ) +
+  facet_wrap(~user_type, scales = "free_y",
+             labeller = labeller(
+               user_type = c(
+               member = "Miembros Anuales",
+               casual = "Usuarios Casuales"
+               )
+              )
+             ) +
+  coord_cartesian(xlim = c(0, 5300)) +
+  scale_x_continuous(
+    breaks = seq(0, 5400, by = 600),
+    labels = function(x) paste0(x / 60)
+  ) +
+  scale_fill_manual(
+    values = c(
+      member = "#FED789FF",
+      casual = "#72874EFF"
+    )
+  ) +
+  labs(
+    title = "Distribución de la duración de los viajes",
+    subtitle = "Comparación de la duración de los viajes entre los tipos de usuario",
+    x = "Duración del viaje (min)",
+    y = "Cantidad de viajes"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  ) +
+  scale_y_continuous(labels = scales::comma) 
+
+# En este gráfico se puede observar más detalladamente lo que ocurre en el anterior.
+
+duracion_80 <- all_trips %>% 
+  filter(trip_duration < 5400) %>%          
+  arrange(user_type, trip_duration) %>%    
+  group_by(user_type) %>% 
+  mutate(
+    total_trips = n(),
+    trip_index = row_number(),
+    prop_acumulada = trip_index / total_trips
+  ) %>% 
+  filter(prop_acumulada >= 0.8) %>% 
+  slice_min(trip_duration, n = 1) %>%         # primer punto donde se cruza el 80%
+  ungroup() %>% 
+  distinct(user_type, trip_duration/60)
+
+duracion_80
+
+# Los Miembros realizaron aproximadamente 600.000 viajes con una duracion de hasta 
+# 15.5 minutos. Esto representa mas de un 80% de los viajes realizados.
+# Luego de ahí disminuye considerablemente la cantidad.
+
+# Pero en cuanto a los Casuales, el 80% de los viajes realizados, se conforma por la
+# suma de los viajes con una duración máxima de 38.6 minutos.
+
+# La duración de los viajes de los Casuales está distribuida mucho más equitativamente
+# que la de los miembros.
+
+
+ggsave("plots/2_Distribucion de la Duración de Viajes.png")
+
+
+
+#### Bar Chart de viajes por día  ####
+all_trips %>% 
+  mutate(weekday = wday(start_time, label = TRUE)) %>%
+  group_by(weekday, user_type) %>% 
+  summarize(trips = n(), .groups = "drop") %>% 
+  ggplot(aes(x= weekday, y= trips, fill=weekday)) +
+  geom_col(alpha = 0.8) +
+  facet_wrap(~user_type,
+             scales="free_y",
+             labeller = labeller(
+               user_type = c(
+                 member = "Miembros Anuales",
+                 casual = "Usuarios Casuales"
+               )
+             )) +
+  theme_minimal() + 
+  scale_fill_manual(values = c("#935038", "#023743FF", "#014337", "#476F84FF", "#A4BED5FF", "#453947FF", "#731A1A")) +   
+  labs(
+    title="Viajes por día",
+    subtitle="Comparación entre miembros anuales y usuarios casuales",
+    x="Día de la semana",
+    y="Cantidad de viajes"
+  ) +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  ) + 
+  scale_y_continuous(labels = scales::comma)
+
+# Se observa que los Miembros utilizan el servicio principalmente en los días de
+# semana, probablemente para ir al trabajo o para hacer trámites
+
+# Por otro lado, los Casuales suelen realizar mas viajes los fines de semana.
+# Uniendo esto con los resultados del gráfico anterior, ya hay un indicio de que
+# los Casuales tienden a utilizar los viajes por un tema de ocio que de necesidad.
+
+ggsave("plots/3_Cantidad de Viajes por Día.png")
+
+
+#### Line Chart de uso por hora del día ####
+all_trips %>% 
+  mutate(hour = hour(start_time)) %>% 
+  group_by(hour, user_type) %>% 
+  summarize(trips = n(), .groups="drop") %>% 
+  group_by(user_type) %>% 
+  mutate(props = trips / sum(trips)) %>% 
+  ggplot(aes(x = hour, y = props, color=user_type)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(alpha = 0.8) +
+  scale_color_manual(
+    values = c(
+      member = "#FED789FF",
+      casual = "#72874EFF"
+    ),
+    labels = c(
+      member = "Miembros",
+      casual = "Casuales"
+    )
+  ) +
+  scale_x_continuous(breaks = seq(0, 23, by = 2), labels = function(x) paste0(x, "hs")) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    title = "Distribución del uso por hora del día",
+    subtitle = "Proporción de viajes por hora dentro de cada tipo de usuario",
+    x = "Hora del día",
+    y = "Proporción de viajes",
+    color = "Tipo de usuario"
+  ) +
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+# Nuevamente se observa la misma tendencia, el uso de los Miembros está concentrado
+# en los horarios en los que los trabajadores suelen ir a su trabajo (6hs - 9hs) o 
+# volver a su hogar luego de la jornada laboral (15hs - 18hs).
+
+# Y también se repite el patrón para los Casuales, se realizan mas viajes entre las
+# 12hs y las 18hs, un horario ideal para salir a recorrer en bicicleta por ocio.
+
+ggsave("plots/4_Proporcion de viajes por hora.png")
+
+
+
+
+# Para reforzar esta idea realicé un heat map que demuestra los viajes realizados
+# en cada hora del dia de los dias de la semana.
+# Esto me ayuda a descifrar mejor los patrones de uso entre los tipos de usuario
+# y confirmar el motivo más frecuente del uso de Cyclistic entre los Casuales y
+# los miembros.
+
+#### Heatmap de Hora del día vs Día de la semana ####
+
+# Recolección de los datos necesarios
+heatmap_data <- all_trips %>% 
+  mutate(hour = hour(start_time),
+         weekday = wday(start_time, label = TRUE)) %>% 
+  group_by(weekday, hour, user_type) %>% 
+  summarize(trips = n(), .groups = "drop")
+
+# Gráfico
+heatmap_data %>% 
+  group_by(user_type) %>% 
+  mutate(prop = trips / max(trips)) %>% 
+  ggplot(aes(x = hour, y = weekday, fill = prop)) + 
+  geom_tile() +
+  facet_wrap(~user_type,
+             labeller = labeller(
+               user_type = c(
+                 member = "Miembros Anuales",
+                 casual = "Usuarios Casuales"
+               )
+             )) +
+  scale_fill_gradient(
+    low = "#02731E",
+    high = "#F2E205",
+    labels = scales::percent) +
+  scale_x_continuous(
+    breaks = seq(0, 23, by = 2),
+    labels = function(x) paste0(x, "hs")) +
+  labs(
+    title = "Hora del día vs Día de la semana",
+    subtitle = "Distribución de los viajes en cada hora de cada día de la semana",
+    y = "Día de la semana",
+    x = "Hora del día",
+    fill = "Proporción"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    axis.text.x = element_text(angle = 45)
+  )
+  
+# Se observa que el principal uso de los Casuales es desde el mediodía hasta
+# la tarde (12hs - 17hs) de los fines de semana. En los días de semana disminuye
+# notablemente el uso general, pero dicho uso tambien se concentra a la tarde 
+# (16hs - 18hs).
+
+# Y el uso principal de los Miembros es en la mañana y en la tarde-noche de los 
+# días de semana. Tambien se observa que en los 7 días de la semana hay un uso
+# moderado alrededor de la mitad del día.
+
+ggsave("plots/5_Hora del día vs Día de la semana.png")
+
+
+#### Bar Chart de estaciones mas usadas ####
+# Selección de las 5 estaciones mas usadas por miembros y por casuales
+top5_stations <- all_trips %>% 
+  group_by(user_type, start_station_name) %>% 
+  summarize(trips = n(), .groups="drop") %>% 
+  group_by(user_type) %>% 
+  slice_max(order_by = trips, n = 5)
+
+
+top5_stations %>% 
+  ggplot(aes(
+    x = trips,
+    y = reorder(start_station_name, trips),
+    fill = user_type
+  )) +
+  geom_col(alpha = 0.8) +
+  scale_fill_manual(
+    values = c(
+      member = "#FED789FF",
+      casual = "#72874EFF"
+    ),
+    labels = c(
+      member = "Miembros",
+      casual = "Casuales"
+    )
+  ) +
+  scale_x_continuous(breaks = seq(0, 14000, by=2000),
+                     labels = scales::comma) +
+  labs(
+    title = "Estaciones más usadas",
+    subtitle = "Top 5 de estaciones más usadas por tipo de usuario",
+    x = "Cantidad de viajes",
+    y = "Estación de salida", 
+    fill = "Usuario"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+ggsave("plots/6_Estaciones mas usadas.png")
+  
+# Quizás puede parecer un gráfico irrelevante, pero no es así, es un gráfico que
+# sigue alimentando mi teoría de 'Uso laboral vs Ocio'.
+  
+# Las 5 estaciones mas usadas por los Miembros se encuentran en el epicentro de la 
+# ciudad de Chicago, en las calles mas transitadas.
+
+# Por otro lado, las 5 estaciones mas usadas por los Casuales se encuentran en la
+# parte costera de la ciudad, o en parques.
+
+
+################################################################
+# ACLARAR QUE NO ES SOLO OCIO, TAMBIÉN PUEDE SER UN TEMA DE TURISMO
+################################################################

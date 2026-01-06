@@ -1,0 +1,3 @@
+"0","library(tidyverse)"
+"0",""
+"0","all_trips <- read_csv(""~/R/Cyclistic Study Case/data/all_trips_clean.csv"")"
