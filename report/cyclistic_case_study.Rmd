@@ -25,6 +25,7 @@ El objetivo de la directora de marketing es diseñar estrategias de marketing co
 la finalidad de convertir a los usuarios casuales en miembros anuales.
 
 Para lograr eso, primeramente el equipo necesita tener un mejor entendimiento sobre:
+
 - ¿Cómo los miembros anuales difieren de los usuarios casuales en la manera de usar Cyclistic?
 - ¿Por qué los usuarios casuales querrían adquirir la membresía anual de Cyclistic?
 - ¿Como puede Cyclistic utilizar los medios digitales para influenciar a los usuarios
@@ -70,7 +71,7 @@ las métricas de duración y distribución.
 </div>
 
 ### 4. Análisis
-###### Análisis general por tipo de usuario
+##### Análisis general por tipo de usuario
 En primer lugar, se analizan métricas generales para comparar el comportamiento
 de los miembros anuales y los usuarios casuales.
 
@@ -86,9 +87,10 @@ all_trips %>%
 ```
 
 A partir de estos datos se observan grandes diferencias entre ambos tipos de usuarios:
-	•	Los *miembros anuales* realizan una cantidad significativamente mayor de viajes.
-	•	Los *usuarios casuales*, en cambio, presentan una duración promedio y mediana más alta.
-	•	El tiempo total viajado es considerablemente mayor en los miembros, debido a la frecuencia de uso.
+
+- Los *miembros anuales* realizan una cantidad significativamente mayor de viajes.
+- Los *usuarios casuales*, en cambio, presentan una duración promedio y mediana más alta.
+- El tiempo total viajado es considerablemente mayor en los miembros, debido a la frecuencia de uso.
 	
 ---
 
